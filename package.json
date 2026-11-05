@@ -1,0 +1,11 @@
+{
+  "name": "kast",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "node build.cjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}
