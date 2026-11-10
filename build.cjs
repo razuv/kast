@@ -12,7 +12,7 @@ const write = (file, data) => fs.writeFileSync(path.join(stage, file), data);
 
 async function build() {
   if (!fs.existsSync(src)) throw new Error('Local-only src folder is required to build the preview.');
-  const input = Object.fromEntries(['index.html','showcase.html','style.css','app.js'].map(f => [f, fs.readFileSync(path.join(src,f),'utf8')]));
+  const input = Object.fromEntries(['index.html','style.css','app.js'].map(f => [f, fs.readFileSync(path.join(src,f),'utf8')]));
   const references = new Set();
   for (const text of Object.values(input)) {
     for (const match of text.matchAll(/assets\/([a-zA-Z0-9._-]+)/g)) references.add(match[1]);
@@ -62,7 +62,7 @@ async function build() {
   write('style.css',css);
   write('app.js',js);
   const heroSizes = '(max-width:760px) 72vw, (max-width:1000px) 540px, 47vw';
-  for (const file of ['index.html','showcase.html']) {
+  for (const file of ['index.html']) {
     let html = input[file].replace(/<img\b[^>]*>/g, tag => {
       const name = tag.match(/\bsrc="assets\/([^"?]+)"/)?.[1];
       const picture = media[name];
@@ -84,12 +84,12 @@ async function build() {
   }
   write('robots.txt','User-agent: *\nDisallow: /\n');
   write('.nojekyll','');
+  fs.mkdirSync(path.join(stage,'v2'),{recursive:true});
+  write('v2/index.html',"<!doctype html><html lang=\"ru\"><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex\"><meta http-equiv=\"refresh\" content=\"0;url=../\"><title>КАСТ</title><a href=\"../\">Перейти на сайт КАСТ</a><script>location.replace(new URL(\"../\",location.href).href+location.hash)</script></html>");
   const files = fs.readdirSync(path.join(stage,'assets'));
   const bytes = files.reduce((sum,f) => sum+fs.statSync(path.join(stage,'assets',f)).size,0);
   const report = {sourceAssets:references.size,sourceBytes,optimizedAssetFiles:files.length,optimizedBytes:bytes,media};
   fs.writeFileSync(path.join(root,'work','release-report.json'),JSON.stringify(report,null,2));
-  const backup = path.join(root,'work','pre-optimization-docs');
-  if (fs.existsSync(out) && !fs.existsSync(backup)) fs.cpSync(out,backup,{recursive:true});
   fs.rmSync(out,{recursive:true,force:true});
   fs.renameSync(stage,out);
   console.log(`${references.size} source assets → ${files.length} optimized files; ${(sourceBytes/1048576).toFixed(2)} MB → ${(bytes/1048576).toFixed(2)} MB (including responsive variants).`);
